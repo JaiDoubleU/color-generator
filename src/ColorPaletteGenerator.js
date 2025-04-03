@@ -1,0 +1,782 @@
+import React, { useState, useEffect, createContext, useContext } from "react";
+import { Hsluv } from "hsluv";
+import { AppBar, Toolbar, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CssBaseline, Stack, ThemeProvider, createTheme} from "@mui/material";
+import Grid from '@mui/material/Grid2';
+
+// icons and logos
+import lightLogo from "./enverus-logo-light.svg";  // Light mode logo
+import darkLogo from "./enverus-logo-dark.svg";  // Dark mode logo
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+
+/* ------ PARAMETERS ------ */
+
+// Min and Max lightness range
+const LIGHTNESS_RANGE = { min: 9, max: 95 };
+/*
+    # 📌 Adjustments for Light & Dark Mode Colors
+
+    # Saturation Adjustments
+    
+    # Some hues need slight saturation tweaks to achieve visual balance with the others:
+        - Red, Orange: Sat = 80-90 (to control intensity).
+        - Yellow: Sat = 90 (prevents it from appearing too light).
+        - Green: Sat = 85-90 (prevents dullness).
+        - Blue, Purple: Sat = 100 (to maintain vibrancy).
+
+    # Hue-Adjusted Saturation
+        - For Light Mode: Slightly reduce saturation to avoid overly vibrant colors.
+        - For Dark Mode: Increase saturation to prevent dullness.
+
+    |------------|------------------------------|-------------------------------|
+    | Color      | Light Mode (Saturation%)     | Dark Mode (Saturation%)       |
+    |------------|------------------------------|-------------------------------|
+    | Red        | 80%                          | 90%                           |
+    | Orange     | 85%                          | 95%                           |
+    | Yellow     | 90%                          | 80% (reduce to prevent glare) |
+    | Green      | 70%                          | 75%                           |
+    | Cyan       | 60%                          | 80%                           |
+    | Blue       | 100%                         | 85%                           |
+    | Purple     | 100%                         | 95%                           |
+    |------------|------------------------------|-------------------------------|
+
+    # Lightness Adjustments
+        - For Light Mode: reduce lightness slightly to maintain contrast.
+        - For Dark Mode: increase the lightness of colors to compensate for the dark background.
+    |------------|------------------------------|-------------------------------|
+    | Color      | Light Mode (Lightness adj)   | Dark Mode (Lightness adj)     |
+    |------------|------------------------------|-------------------------------|
+    | Red        | -1%                          | -                             |
+    | Orange     | -5%                          | -                             |
+    | Yellow     | -1%                          | -                             |
+    | Green      | +1%                          | +1%                           |
+    | Cyan       | -1%                          | +2%                           |
+    | Blue       | -                            | -                             |
+    | Purple     | -                            | +2%                           |
+    |------------|------------------------------|-------------------------------|
+
+    > **Why?** Dark mode backgrounds are darker, so colors need **higher lightness** for better contrast.
+*/
+
+
+// Adjust Lightness 
+// In light mode, you need darker colors for foreground elements to stand out against a light background.
+// In dark mode, you need lighter colors for foreground elements to pop against a dark background.
+const LIGHTNESS_VALUES_DARK = {
+    // Neutral35: { min: 9, max: 97 }, 
+    // Neutral40: { min: 9, max: 97 }, 
+    // Neutral45: { min: 9, max: 97 }, 
+    Red: { min: 8, max: 93 },     // Red is perceived brightly; avoid going too dark at 8%
+    Orange: { min: 10, max: 93 }, // Orange is vibrant; start slightly lighter than red
+    Yellow: { min: 10, max: 93 }, // Yellow is very light; shift entire ramp up for legibility
+    Green: { min: 8, max: 98 },  // Green is balanced; allow brighter top end for natural greens
+    Cyan: { min: 8, max: 98 },    // Cyan is a cooler color and appears darker; allow brighter top
+    Blue: { min: 8, max: 95 },    // Blue has a darker perception; low end at ~9% is okay
+    Purple: { min: 8, max: 95 }   // Similar to blue; deep purples at low end feel rich
+};
+
+const LIGHTNESS_VALUES_LIGHT = {
+    // Neutral35: { min: 5, max: 95 }, 
+    // Neutral40: { min: 5, max: 95 }, 
+    // Neutral45: { min: 5, max: 95 }, 
+    Red: { min: 5, max: 92 },     // Red is perceived brightly; avoid going too dark at 8%
+    Orange: { min: 7, max: 89 }, // Orange is vibrant; start slightly lighter than red
+    Yellow: { min: 4, max: 96 }, // Yellow is very light; shift entire ramp up for legibility
+    Green: { min: 3, max: 99 },  // Green is balanced; allow brighter top end for natural greens
+    Cyan: { min: 3, max: 98 },    // Cyan is a cooler color and appears darker; allow brighter top
+    Blue: { min: 3, max: 95 },    // Blue has a darker perception; low end at ~9% is okay
+    Purple: { min: 3, max: 95 }   // Similar to blue; deep purples at low end feel rich
+};
+
+// Base Hue and Saturation values for light and dark modes
+const LIGHT_MODE_COLOR_PARAMS = [ 
+    // { name: "Neutral35", hue: 30, sat: 5 },
+    // { name: "Neutral40", hue: 40, sat: 5 },
+    // { name: "Neutral45", hue: 45, sat: 5 },
+    { name: "Red", hue: 10, sat: 75 },
+    { name: "Orange", hue: 30, sat: 75 },
+    { name: "Yellow", hue: 60, sat: 80},
+    { name: "Green", hue: 120, sat: 60},
+    { name: "Cyan", hue: 180, sat: 75},
+    { name: "Blue", hue: 240, sat: 75},
+    { name: "Purple", hue: 290, sat: 75},
+];
+
+const DARK_MODE_COLOR_PARAMS = [ 
+    // { name: "Neutral35", hue: 35, sat: 0 },
+    // { name: "Neutral40", hue: 40, sat: 5 },
+    // { name: "Neutral45", hue: 45, sat: 10 },
+    { name: "Red", hue: 10, sat: 90 },
+    { name: "Orange", hue: 30, sat: 90 },
+    { name: "Yellow", hue: 60, sat: 80 },
+    { name: "Green", hue: 120, sat: 70 },
+    { name: "Cyan", hue: 180, sat: 80 },
+    { name: "Blue", hue: 240, sat: 90 },
+    { name: "Purple", hue: 290, sat: 90 },
+];
+
+// the name of the colors in each ramp (i.e. red 0, red 10, etc)e 
+const STEP_NAMES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100];
+
+const NEUTRAL_STEP_NAMES = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100];
+//[0, 2, 4, 6, 8, 10, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 50, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 98, 100];
+
+const NEUTRAL_LIGHTNESS_VALUES = {
+    Neutral35: { min: 0, max: 100 },
+    Neutral40: { min: 0, max: 100 },
+    Neutral45: { min: 0, max: 100 }
+};
+
+const NEUTRAL_PARAMS = [ 
+    { name: "Neutral35", hue: 10, sat: 2 },
+    { name: "Neutral40", hue: 15, sat: 4 },
+    { name: "Neutral45", hue: 20, sat: 6 },
+];
+
+
+// Context for toggling dark mode
+const ThemeContext = createContext();
+
+// Generates a color ramp based on the base hue and sat values passed.
+const generateColorRamp = (colorName, hue, sat, lightnessParams) => {
+    var colorLightnessRange = lightnessParams[colorName];
+    
+    // defines an array of evenly distributed series of lightness values, with some adjustments
+    // const lightnessValues = Array.from(
+    //     { length: STEP_NAMES.length },
+    //     (_, i) => Math.round(colorLightnessRange.min + (colorLightnessRange.max / (STEP_NAMES.length)) * i ) 
+    // );
+    const lightnessValues = Array.from(
+        { length: STEP_NAMES.length },
+        (_, i) => Math.round(
+            colorLightnessRange.min + 
+            ((colorLightnessRange.max - colorLightnessRange.min) * i) / (STEP_NAMES.length - 1)
+        )
+    );
+
+    return lightnessValues.map((l) => {
+        const hsluvInstance = new Hsluv();
+        hsluvInstance.hsluv_h = hue;
+        hsluvInstance.hsluv_s = 100 * (sat/100);  //sat;
+        hsluvInstance.hsluv_l = l;
+        hsluvInstance.hsluvToRgb();
+
+        const r = Math.round(hsluvInstance.rgb_r * 255);
+        const g = Math.round(hsluvInstance.rgb_g * 255);
+        const b = Math.round(hsluvInstance.rgb_b * 255);
+        const a = 1; // Full opacity
+
+        const rgbaColor = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+
+        const hexColor = rgbToHex([r / 255, g / 255, b / 255]);
+
+        return {
+            step: STEP_NAMES[lightnessValues.indexOf(l)],
+            hex: hexColor,
+            rgba: rgbaColor, //`rgba(${r}, ${g}, ${b}, ${a})`,
+            hsluv: `hsluv(${Math.round(hue)},${sat}%,${l}%)`,
+        };
+    });
+};
+
+const generateNeutralColorRamp = (colorName, hue, sat, lightnessParams) => {
+    var colorLightnessRange = lightnessParams[colorName];
+    
+    // defines an array of evenly distributed series of lightness values, with some adjustments
+    // const lightnessValues = Array.from(
+    //     { length: NEUTRAL_STEP_NAMES.length },
+    //     (_, i) => Math.round(colorLightnessRange.min + (colorLightnessRange.max / (NEUTRAL_STEP_NAMES.length)) * i ) 
+    // );
+    const lightnessValues = Array.from(
+        { length: NEUTRAL_STEP_NAMES.length },
+        (_, i) => Math.round(
+            colorLightnessRange.min + 
+            ((colorLightnessRange.max - colorLightnessRange.min) * i) / (NEUTRAL_STEP_NAMES.length - 1)
+        )
+    );
+
+    return lightnessValues.map((l) => {
+        const hsluvInstance = new Hsluv();
+        hsluvInstance.hsluv_h = hue;
+        hsluvInstance.hsluv_s = 100 * (sat/100);  //sat;
+        hsluvInstance.hsluv_l = l;
+        hsluvInstance.hsluvToRgb();
+
+        const r = Math.round(hsluvInstance.rgb_r * 255);
+        const g = Math.round(hsluvInstance.rgb_g * 255);
+        const b = Math.round(hsluvInstance.rgb_b * 255);
+        const a = 1; // Full opacity
+
+        const rgbaColor = "rgba(" + r + "," + g + "," + b + "," + a + ")";
+
+        const hexColor = rgbToHex([r / 255, g / 255, b / 255]);
+
+        return {
+            step: NEUTRAL_STEP_NAMES[lightnessValues.indexOf(l)],
+            hex: hexColor,
+            rgba: rgbaColor, //`rgba(${r}, ${g}, ${b}, ${a})`,
+            hsluv: `hsluv(${Math.round(hue)},${sat}%,${l}%)`,
+        };
+    });
+};
+
+const ColorPaletteGenerator = () => {    
+    const { darkMode, toggleTheme } = useContext(ThemeContext);
+
+    // Select the appropriate saturation values based on theme
+    const selectedParams = darkMode ? DARK_MODE_COLOR_PARAMS : LIGHT_MODE_COLOR_PARAMS;
+    const lightnessParams = darkMode ? LIGHTNESS_VALUES_DARK : LIGHTNESS_VALUES_LIGHT;
+    const logMessage = darkMode ? 'generating palette for dark mode' : 'generating palette for light mode';
+    console.log(logMessage);
+
+    const [colorRamps, setColorRamps] = useState([]);
+
+    // Generate color ramps when component mounts or when theme changes
+    useEffect(() => {
+        setColorRamps(
+            selectedParams.map(({ name, hue, sat, lightnessAdjustment }) => ({
+                name,
+                hue,
+                sat,
+                colorRamp: generateColorRamp(name, hue, sat, lightnessParams),
+            }))
+        );
+        
+    }, [darkMode, selectedParams]); // Runs only when darkMode changes
+    
+    
+
+    const [loading] = useState(false);
+
+    // function for manually regenerating the color ramps based on the selected dark/light mode.
+    // const regeneratePalette = () => {
+    //     const logMessage = darkMode ? 'regenerating palette for dark mode' : 'regenerating palette for light mode';
+    //     console.log(logMessage);
+        
+    //     setLoading(true); // Hide palette temporarily
+    //     setTimeout(() => {
+    //         setColorRamps(
+    //             selectedParams.map(({ name, hue, sat }) => ({
+    //                 name,
+    //                 hue,
+    //                 sat,
+    //                 colorRamp: generateColorRamp(hue, sat),
+    //             }))
+    //         );
+    //         setLoading(false); // Show palette again
+    //     }, 100); // Short delay for UI effect
+    // };
+
+
+    return (        
+        <div style={{ padding: "15px", textAlign: "left" }}>            
+            <AppBar component="nav">                
+                <Toolbar>
+                    <img height="50px" alt="enverus logo" className="logo"  src={darkMode ? darkLogo : lightLogo} />
+                    <div style={{ lineHeight: "1", height: "14px", fontSize: "22px", verticalAlign: "bottom", marginLeft: "8px" }}> HSLuv Color Palette Generator </div>
+                </Toolbar>
+            </AppBar>
+
+            <Grid container spacing={2} style={{marginTop: '50px'}}>
+                <Grid size={6}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            justifyContent: "flex-start",
+                            alignItems: "flex-start",
+                            paddingBottom: "16px"
+                        }}
+                    >
+                        
+                        {/* <Button
+                            color="primary"
+                            onClick={regeneratePalette}
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            Regenerate Palette
+                        </Button>
+                         */}
+                       
+                        <Button
+                            onClick={toggleTheme}
+                            LightModeIcon
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            {darkMode ?<LightModeIcon /> :  <DarkModeIcon/> } &nbsp; Go {darkMode ? 'Light'  : "Dark"} 
+                        </Button>
+                    </Stack>
+                </Grid>
+                <Grid size={6}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            justifyContent: "flex-end",
+                            alignItems: "flex-end",
+                            paddingBottom: "16px"
+                        }}
+                    >
+                        <Button
+                            onClick={() => exportAsJSON(colorRamps)}
+                            style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}
+                        >
+                            Export JSON
+                        </Button>
+                        <Button
+                            onClick={() => exportAsCSV(colorRamps)}
+                            style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}
+                        >
+                            Export CSV
+                        </Button>
+                        <Button onClick={() => exportAsDesignTokens(colorRamps)} style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}>
+                            Export Design Tokens
+                        </Button>
+                        <Button
+                            onClick={() => exportToFigma(colorRamps)}
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            Export to Figma
+                        </Button>
+                    </Stack>
+                </Grid>
+            </Grid>
+            {!loading ? ( // Hide the palette when regenerating
+                <TableContainer component={Paper} sx={{ boxShadow: 0 }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>
+                                    Color
+                                </TableCell>
+                                {Array.from({ length: STEP_NAMES.length }, (_, i) => (
+                                    <TableCell key={i} align="center">
+                                        {" "}
+                                        {STEP_NAMES[i]}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {colorRamps.map(({ name, colorRamp }) => (
+                                <TableRow key={name}>
+                                    <TableCell>
+                                        <small>{name}</small>
+                                    </TableCell>
+                                    {colorRamp.map(({ hex, hsluv, rgba }, i) => (
+                                        <TableCell
+                                            key={i}
+                                            align="center"
+                                            style={{
+                                                backgroundColor: hex,
+                                                color: (parseInt(hsluv.match(/\d+/g)[2]) >= 50 ? "black" : "white"),
+                                                padding: "10px",
+                                            }}
+                                            title={hsluv} // Show HSLuv value on hover
+                                        >
+                                            <p><pre>{hex}</pre></p>
+                                            <div>
+                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{rgba}</code>
+                                            </div>
+                                            <div>
+                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{hsluv}</code>
+                                            </div>
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            ) : (
+            <h2 style={{ marginTop: "20px" }}>Regenerating Palette...</h2> // Show regenerating message
+        )}
+        </div>
+    );
+};
+
+const NeutralPaletteGenerator = () => {    
+    const { darkMode, toggleTheme } = useContext(ThemeContext);
+
+    // Select the appropriate saturation values based on theme
+    const selectedParams = NEUTRAL_PARAMS;
+    const lightnessParams = NEUTRAL_LIGHTNESS_VALUES;
+    const logMessage = 'generating neutral palette';
+    console.log(logMessage);
+
+    const [colorRamps, setColorRamps] = useState([]);
+
+    // Generate color ramps when component mounts or when theme changes
+    useEffect(() => {
+        setColorRamps(
+            selectedParams.map(({ name, hue, sat, lightnessAdjustment }) => ({
+                name,
+                hue,
+                sat,
+                colorRamp: generateNeutralColorRamp(name, hue, sat, NEUTRAL_LIGHTNESS_VALUES),
+            }))
+        );
+        
+    }, [lightnessParams, selectedParams]); 
+    
+    
+
+    const [loading] = useState(false);
+
+    // function for manually regenerating the color ramps based on the selected dark/light mode.
+    // const regeneratePalette = () => {
+    //     const logMessage = darkMode ? 'regenerating palette for dark mode' : 'regenerating palette for light mode';
+    //     console.log(logMessage);
+        
+    //     setLoading(true); // Hide palette temporarily
+    //     setTimeout(() => {
+    //         setColorRamps(
+    //             selectedParams.map(({ name, hue, sat }) => ({
+    //                 name,
+    //                 hue,
+    //                 sat,
+    //                 colorRamp: generateColorRamp(hue, sat),
+    //             }))
+    //         );
+    //         setLoading(false); // Show palette again
+    //     }, 100); // Short delay for UI effect
+    // };
+
+
+    return (        
+        <div style={{ padding: "15px", textAlign: "left" }}>            
+            <AppBar component="nav">                
+                <Toolbar>
+                    <img height="50px" alt="enverus logo" className="logo"  src={darkMode ? darkLogo : lightLogo} />
+                    <div style={{ lineHeight: "1", height: "14px", fontSize: "22px", verticalAlign: "bottom", marginLeft: "8px" }}> HSLuv Color Palette Generator </div>
+                </Toolbar>
+            </AppBar>
+
+            <Grid container spacing={2} style={{marginTop: '50px'}}>
+                <Grid size={6}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            justifyContent: "flex-start",
+                            alignItems: "flex-start",
+                            paddingBottom: "16px"
+                        }}
+                    >
+                        
+                        {/* <Button
+                            color="primary"
+                            onClick={regeneratePalette}
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            Regenerate Palette
+                        </Button>
+                         */}
+                       
+                        <Button
+                            onClick={toggleTheme}
+                            LightModeIcon
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            {darkMode ?<LightModeIcon /> :  <DarkModeIcon/> } &nbsp; Go {darkMode ? 'Light'  : "Dark"} 
+                        </Button>
+                    </Stack>
+                </Grid>
+                <Grid size={6}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            justifyContent: "flex-end",
+                            alignItems: "flex-end",
+                            paddingBottom: "16px"
+                        }}
+                    >
+                        <Button
+                            onClick={() => exportAsJSON(colorRamps)}
+                            style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}
+                        >
+                            Export JSON
+                        </Button>
+                        <Button
+                            onClick={() => exportAsCSV(colorRamps)}
+                            style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}
+                        >
+                            Export CSV
+                        </Button>
+                        <Button onClick={() => exportAsDesignTokens(colorRamps)} style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}>
+                            Export Design Tokens
+                        </Button>
+                        <Button
+                            onClick={() => exportToFigma(colorRamps)}
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            Export to Figma
+                        </Button>
+                    </Stack>
+                </Grid>
+            </Grid>
+            {!loading ? ( // Hide the palette when regenerating
+                <TableContainer component={Paper} sx={{ boxShadow: 0 }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>
+                                    Color
+                                </TableCell>
+                                {Array.from({ length: NEUTRAL_STEP_NAMES.length }, (_, i) => (
+                                    <TableCell key={i} align="center">
+                                        {" "}
+                                        {NEUTRAL_STEP_NAMES[i]}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {colorRamps.map(({ name, colorRamp }) => (
+                                <TableRow key={name}>
+                                    <TableCell>
+                                        <small>{name}</small>
+                                    </TableCell>
+                                    {colorRamp.map(({ hex, hsluv, rgba }, i) => (
+                                        <TableCell
+                                            key={i}
+                                            align="center"
+                                            style={{
+                                                backgroundColor: hex,
+                                                color: (parseInt(hsluv.match(/\d+/g)[2]) >= 50 ? "black" : "white"),
+                                                padding: "10px",
+                                            }}
+                                            title={hsluv} // Show HSLuv value on hover
+                                        >
+                                            <p><pre>{hex}</pre></p>
+                                            <div>
+                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{rgba}</code>
+                                            </div>
+                                            <div>
+                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{hsluv}</code>
+                                            </div>
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            ) : (
+            <h2 style={{ marginTop: "20px" }}>Regenerating Palette...</h2> // Show regenerating message
+        )}
+        </div>
+    );
+};
+
+
+// Dark Mode Theme Provider Component
+const ThemeProviderComponent = ({ children }) => {
+    const [darkMode, setDarkMode] = useState(true);
+
+    const toggleTheme = () => {
+        setDarkMode(!darkMode);
+    };
+
+    const theme = createTheme({
+        palette: {
+            mode: darkMode ? "dark" : "light",
+            background: {
+                default: darkMode ? "#1e1e1e" : "#ffffff", // Dark mode: dark gray, Light mode: light gray
+                paper: darkMode ? "#1e1e1e" : "#ffffff",  // Table background colors
+            },
+            text: {
+                primary: darkMode ? "#ffffff" : "#000000", // Adjust text colors
+            }
+        },
+        components: {
+            MuiTableCell: {
+            styleOverrides: {
+                root: {
+                    fontSize: "14px", // Default font size for all table cells
+                },
+            },
+            },
+        },
+    });
+
+    return (
+        <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
+            <ThemeProvider theme={theme}>
+                <CssBaseline />
+                <div style={{ backgroundColor: theme.palette.background.default, minHeight: "100vh", padding: "20px" }}>
+                    {children}
+                </div>
+            </ThemeProvider>
+        </ThemeContext.Provider>
+    );
+};
+// Function to create a hex color code from an rgb array of red, green, blue values.
+const rgbToHex = (rgbArray) => {
+    return (
+        "#" +
+        rgbArray
+            .map((value) => {
+                const hex = Math.round(value * 255).toString(16);
+                return hex.length === 1 ? "0" + hex : hex;
+            })
+            .join("")
+    );
+};
+
+// function to download an exported token file
+const downloadFile = (data, filename, type) => {
+    const blob = new Blob([data], { type });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+// function to export design tokens in JSON Format
+const exportAsJSON = (colorRamps) => {
+    // console.log('color ramps: ' + JSON.stringify(colorRamps));
+    const jsonData = JSON.stringify(colorRamps, null, 2);
+    downloadFile(jsonData, "color_palette.json", "application/json");
+};
+
+const exportToFigma = (colorRamps) => {
+  // Create a Figma-compatible color styles object
+  const figmaStyles = {};
+  
+  colorRamps.forEach(({ name, colorRamp }) => {
+    colorRamp.forEach(({ hex, step }) => {
+      // Create style key in format "color/red/100" or "color/blue/50"
+      const styleKey = `color/${name.toLowerCase()}/${step}`;
+      
+      // Convert hex to RGB values (0-1 range as Figma expects)
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      // Create Figma color style object
+      figmaStyles[styleKey] = {
+        name: styleKey,
+        description: `${name} ${step}`,
+        paints: [
+          {
+            type: "SOLID",
+            visible: true,
+            opacity: 1,
+            blendMode: "NORMAL",
+            color: { r, g, b }
+          }
+        ]
+      };
+    });
+  });
+  
+  // Create text representation for copying
+  const figmaText = JSON.stringify(figmaStyles, null, 2);
+  
+  // Create a textarea element to hold the text for copying
+  const textArea = document.createElement("textarea");
+  textArea.value = figmaText;
+  textArea.style.position = "fixed";  // Make it invisible
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    // Execute copy command
+    const successful = document.execCommand('copy');
+    if (successful) {
+      alert("Figma styles copied to clipboard! Paste in Figma's Import dialog.");
+    } else {
+      throw new Error("Copy command failed");
+    }
+  } catch (err) {
+    console.error("Could not copy to clipboard: ", err);
+    // Fallback: Create downloadable file
+    downloadFile(figmaText, "figma_color_styles.json", "application/json");
+  } finally {
+    // Clean up
+    document.body.removeChild(textArea);
+  }
+};
+// function to export design tokens in CSV Format
+const exportAsCSV = (colorRamps) => {
+    let csv = "Color Name," + STEP_NAMES.join(",") + "\n";
+
+    colorRamps.forEach(({ name, colorRamp }) => {
+        csv += name + "," + colorRamp.map(({ hex }) => hex).join(",") + "\n";
+    });
+
+    downloadFile(csv, "color_palette.csv", "text/csv");
+};
+
+// function to export design tokens in Design Token Community Group Format
+// TODO: this needs some love as it's not currently in the proper DTCG format. 
+const exportAsDesignTokens = (colorRamps) => {
+    const designTokens = {
+        "$schema": "https://design-tokens.github.io/community-group/format/",
+        "color": {}
+    };
+
+    // TODO: this needs to handle color for both dark and light modes
+    colorRamps.forEach(({ name, colorRamp }) => {
+        designTokens.color[name.toLowerCase()] = {};
+        colorRamp.forEach(({ hex, step }) => {
+            designTokens.color[name.toLowerCase()][`${step}`] = {
+                "value": hex
+            };
+        });
+    });
+
+    downloadFile(JSON.stringify(designTokens, null, 2), "design_tokens.json", "application/json");
+};
+
+const App = () => {
+    return (
+        <ThemeProviderComponent>
+            <ColorPaletteGenerator />
+            <NeutralPaletteGenerator />
+        </ThemeProviderComponent>
+    );
+};
+
+export default App;

@@ -1,4 +1,31 @@
+body {
+  margin: 0;
+  font-family: "Roboto Flex", sans-serif !important;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: 14px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .App {
+  font-family: "Roboto Flex", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "slnt" <slant>,
+    "wdth" <width>,
+    "GRAD" <grade>,
+    "XOPQ" <thick stroke>,
+    "XTRA" <counter width>,
+    "YOPQ" <thin stroke>,
+    "YTAS" 750,
+    "YTDE" -203,
+    "YTFI" 738,
+    "YTLC" <lowercase height>,
+    "YTUC" <uppercase height>;
   text-align: center;
 }
 
@@ -14,14 +41,14 @@
 }
 
 .App-header {
+  align-items: center;
   background-color: #282c34;
+  color: white;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: column;  
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
 }
 
 .App-link {
@@ -35,4 +62,12 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+code {
+  font-family: "Roboto Mono", monospace;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: 9px;
+  font-style: normal;
 }
