@@ -11,8 +11,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 
 /* ------ PARAMETERS ------ */
 
-// Min and Max lightness range
-const LIGHTNESS_RANGE = { min: 9, max: 95 };
+
 /*
     # 📌 Adjustments for Light & Dark Mode Colors
 
@@ -59,40 +58,9 @@ const LIGHTNESS_RANGE = { min: 9, max: 95 };
 */
 
 
-// Adjust Lightness 
-// In light mode, you need darker colors for foreground elements to stand out against a light background.
-// In dark mode, you need lighter colors for foreground elements to pop against a dark background.
-// const LIGHTNESS_VALUES_DARK = {
-//     // Neutral35: { min: 9, max: 97 }, 
-//     // Neutral40: { min: 9, max: 97 }, 
-//     // Neutral45: { min: 9, max: 97 }, 
-//     Red: { min: 8, max: 93 },     // Red is perceived brightly; avoid going too dark at 8%
-//     Orange: { min: 10, max: 93 }, // Orange is vibrant; start slightly lighter than red
-//     Yellow: { min: 10, max: 93 }, // Yellow is very light; shift entire ramp up for legibility
-//     Green: { min: 8, max: 98 },  // Green is balanced; allow brighter top end for natural greens
-//     Cyan: { min: 8, max: 98 },    // Cyan is a cooler color and appears darker; allow brighter top
-//     Blue: { min: 8, max: 95 },    // Blue has a darker perception; low end at ~9% is okay
-//     Purple: { min: 8, max: 95 }   // Similar to blue; deep purples at low end feel rich
-// };
-
-// const LIGHTNESS_VALUES_LIGHT = {
-//     // Neutral35: { min: 5, max: 95 }, 
-//     // Neutral40: { min: 5, max: 95 }, 
-//     // Neutral45: { min: 5, max: 95 }, 
-//     Red: { min: 5, max: 92 },     // Red is perceived brightly; avoid going too dark at 8%
-//     Orange: { min: 7, max: 89 }, // Orange is vibrant; start slightly lighter than red
-//     Yellow: { min: 4, max: 96 }, // Yellow is very light; shift entire ramp up for legibility
-//     Green: { min: 3, max: 99 },  // Green is balanced; allow brighter top end for natural greens
-//     Cyan: { min: 3, max: 98 },    // Cyan is a cooler color and appears darker; allow brighter top
-//     Blue: { min: 3, max: 95 },    // Blue has a darker perception; low end at ~9% is okay
-//     Purple: { min: 3, max: 95 }   // Similar to blue; deep purples at low end feel rich
-// };
 
 // Base Hue and Saturation values for light and dark modes
 const LIGHT_MODE_COLOR_PARAMS = [ 
-    // { name: "Neutral35", hue: 30, sat: 5 },
-    // { name: "Neutral40", hue: 40, sat: 5 },
-    // { name: "Neutral45", hue: 45, sat: 5 },
     { name: "Red", hue: 10, sat: 75, minLightness: 5, maxLightness: 92 },
     { name: "Orange", hue: 30, sat: 75, minLightness: 7, maxLightness: 89 },
     { name: "Yellow", hue: 60, sat: 80, minLightness: 4, maxLightness: 96},
@@ -103,9 +71,6 @@ const LIGHT_MODE_COLOR_PARAMS = [
 ];
 
 const DARK_MODE_COLOR_PARAMS = [ 
-    // { name: "Neutral35", hue: 35, sat: 0 },
-    // { name: "Neutral40", hue: 40, sat: 5 },
-    // { name: "Neutral45", hue: 45, sat: 10 },
     { name: "Red", hue: 10, sat: 90, minLightness: 8, maxLightness: 93 },
     { name: "Orange", hue: 30, sat: 90, minLightness: 10, maxLightness: 93 },
     { name: "Yellow", hue: 60, sat: 80, minLightness: 10, maxLightness: 93 },
@@ -121,10 +86,8 @@ const STEP_NAMES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100];
 const NEUTRAL_STEP_NAMES = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100];
 
 const NEUTRAL_PARAMS = [ 
+    { name: "Neutral0", hue: 5, sat: 0, minLightness: 0, maxLightness: 100 },
     { name: "Neutral1", hue: 10, sat: 0, minLightness: 0, maxLightness: 100 },
-    { name: "Neutral2", hue: 15, sat: 2,  minLightness: 0, maxLightness: 100  },
-    { name: "Neutral3", hue: 325, sat: 4, minLightness: 0, maxLightness: 100 },
-    { name: "Neutral4", hue: 350, sat: 4,  minLightness: 0, maxLightness: 100  },
 ];
 
 

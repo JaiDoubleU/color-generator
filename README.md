@@ -1,70 +1,119 @@
-# Getting Started with Color Generator
+# 🎨 Color Generator
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern React-based application for generating and managing HSLuv color palettes with a clean Material UI interface.
 
-## Available Scripts
+## 📚 Table of Contents
 
-To run the project, run the following:
+- [Introduction](#introduction)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Dependencies](#dependencies)
+- [Scripts](#scripts)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Troubleshooting](#troubleshooting)
+- [Contributors](#contributors)
+- [License](#license)
 
-### `npm start`
+## 🧩 Introduction
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**Color Generator** is a web application designed to generate aesthetically pleasing color palettes using the HSLuv color space. It leverages Material UI for a responsive and visually appealing interface and Emotion for CSS-in-JS styling.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## ✨ Features
 
-### `npm test`
+- Generate HSLuv-based color palettes.
+- Responsive and modern UI built with MUI v6.
+- Real-time color updates and previews.
+- Integration with Emotion for dynamic styling.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## ⚙️ Installation
 
-### `npm run build`
+Make sure you have [Node.js](https://nodejs.org/) installed.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+git clone https://github.com/JaiDoubleU/color-generator
+cd color-generator
+npm install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🚀 Usage
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- To start the development server:
 
-### `npm run eject`
+```bash
+npm start
+```
+This runs the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- To customize the generated colors, modify the parameters at the top of `/src/ColorPaletteGenerator.js`.  The development server will automatically build and refresh the colors.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- To build the project for production:
 
-## Learn More
+```bash
+npm run build
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- To explore the HSLuv color space and its API at the [HSLuv GitHub repository](https://github.com/hsluv).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
 
-### Code Splitting
+## 📦 Dependencies
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Key dependencies include:
 
-### Analyzing the Bundle Size
+- `react` ^19.0.0
+- `@mui/material` ^6.4.6
+- `@mui/icons-material` ^6.4.6
+- `@emotion/react` & `@emotion/styled` ^11.14.0
+- `hsluv` ^1.0.1
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+For a full list, refer to the `package.json`.
 
-### Making a Progressive Web App
+## 🛠 Scripts
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- `start` – Launches the dev server
+- `build` – Builds the app for production
+- `test` – Runs tests using Jest and Testing Library
+- `eject` – Ejects the app from Create React App setup
 
-### Advanced Configuration
+## ⚙️ Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- Uses `react-scripts` from Create React App
+- ESLint extended with `react-app` and `react-app/jest` presets
+- Browserslist configured for modern production and dev environments
 
-### Deployment
+## 🧪 Testing
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+This project is set up with:
 
-### `npm run build` fails to minify
+- `@testing-library/react`
+- `@testing-library/jest-dom`
+- `@testing-library/user-event`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+To run tests:
+
+```bash
+npm test
+```
+
+## 🛠 Troubleshooting
+
+- Ensure Node.js version is compatible with React 19 and MUI v6.
+- Delete `node_modules` and reinstall if encountering dependency issues:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+## 👥 Contributors
+
+- Jason Shannon
+
+
+## 📄 License
+
+This project is currently **private**. Licensing information can be added once the project is ready for open-source or public release.
