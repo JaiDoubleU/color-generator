@@ -2,21 +2,6 @@
 
 A modern React-based application for generating and managing HSLuv color palettes with a clean Material UI interface.
 
-## 📚 Table of Contents
-
-- [Introduction](#introduction)
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Dependencies](#dependencies)
-- [Scripts](#scripts)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [Documentation](#documentation)
-- [Troubleshooting](#troubleshooting)
-- [Contributors](#contributors)
-- [License](#license)
-
 ## 🧩 Introduction
 
 **Color Generator** is a web application designed to generate aesthetically pleasing color palettes using the HSLuv color space. It leverages Material UI for a responsive and visually appealing interface and Emotion for CSS-in-JS styling.
