@@ -1,6 +1,6 @@
 # 🎨 Color Generator
 
-A modern React-based application for generating and managing HSLuv color palettes with a clean Material UI interface.
+A modern React-based utility designed to generate visually cohesive color palettes using the [HSLuv](https://github.com/hsluv) color space. It provides intuitive controls and well-defined parameters for adjusting hue, saturation, and lightness, enabling designers and developers to create accessible and harmonious color systems with precision.
 
 ## 🧩 Introduction
 
@@ -32,8 +32,7 @@ npm start
 ```
 This runs the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-
-- To customize the generated colors, modify the parameters at the top of `/src/ColorPaletteGenerator.js`.  The development server will automatically build and refresh the colors.
+- To customize the generated colors, modify the parameters at the top of `/src/ColorPaletteGenerator.js`.  The development server will automatically build and refresh the generated colors.
 
 
 - To build the project for production:
@@ -42,7 +41,7 @@ This runs the app in development mode. Open [http://localhost:3000](http://local
 npm run build
 ```
 
-- To explore the HSLuv color space and its API at the [HSLuv GitHub repository](https://github.com/hsluv).
+- Explore the HSLuv color space and its API at the [HSLuv GitHub repository](https://github.com/hsluv).
 
 
 ## 📦 Dependencies
@@ -97,6 +96,7 @@ npm install
 ## 👥 Contributors
 
 - Jason Shannon
+- Karel Suchomel
 
 
 ## 📄 License
