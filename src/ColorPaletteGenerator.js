@@ -57,7 +57,7 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
     > **Why?** Dark mode backgrounds are darker, so colors need **higher lightness** for better contrast.
 */
 
-
+/* ------ Color Palette Parameters ------ */
 
 // Base Hue and Saturation values for light and dark modes
 const LIGHT_MODE_COLOR_PARAMS = [ 
@@ -83,6 +83,8 @@ const DARK_MODE_COLOR_PARAMS = [
 // the name of the colors in each ramp (i.e. red 0, red 10, etc)e 
 const STEP_NAMES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100];
 
+/* ------ Neutral Color Palette Parameters ------ */
+
 const NEUTRAL_STEP_NAMES = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100];
 
 const NEUTRAL_PARAMS = [ 
@@ -90,6 +92,73 @@ const NEUTRAL_PARAMS = [
     { name: "Neutral1", hue: 10, sat: 0, minLightness: 0, maxLightness: 100 },
 ];
 
+/* Charting Color Palette Parameters ------ */
+const CHARTING_PARAMS = [ 
+    { name: "Categorical1", count: 14, baseHue: 0, spacing: "even" },
+    { name: "Categorical2", count: 14, baseHue: 50, spacing: "even" },
+    { name: "RandomSeeded", count: 14, baseHue: 0, spacing: "random", seed: 125 },
+    { name: "SplitComp", count: 14, baseHue: 0, spacing: "split-complementary" },
+    { name: "Custom Golden", count: 14, baseHue: 0, spacing: "golden", sat: 90, lightness: 65 }, // fixed S/L, no alternation
+    { name: "Custom Even", count: 14, baseHue: 0, spacing: "random", sat: 90, lightness: 65 } // fixed S/L, no alternation
+];
+
+// Generate a categorical palette: minimal spacing logic with fixed saturation/lightness
+// Supports: 'even', 'golden', and 'random' (seeded)
+const generateCategoricalPalette = (count, { mode = 'light', baseHue = 0, spacing = 'even', sat, lightness, seed } = {}) => {
+    const isDark = mode === 'dark';
+    // Defaults aimed at maximizing contrast between neighbors: very high saturation, mid-high lightness
+    const baseSaturation = (typeof sat === 'number') ? sat : (isDark ? 100 : 95);
+    const baseLightness = (typeof lightness === 'number') ? lightness : (isDark ? 74 : 62);
+    const lightnessDelta = 10; // alternate +/- this value to create neighbor contrast
+
+    const wrapHue = (h) => ((h % 360) + 360) % 360;
+
+    let hues;
+    if (spacing === 'golden') {
+        const step = 137.508;
+        hues = Array.from({ length: count }, (_, i) => wrapHue(baseHue + i * step));
+    } else if (spacing === 'random') {
+        let s = typeof seed === 'number' ? seed : 1234;
+        const next = () => {
+            s = (1664525 * s + 1013904223) % 4294967296;
+            return s / 4294967296;
+        };
+        hues = Array.from({ length: count }, () => wrapHue(baseHue + Math.floor(next() * 360)));
+    } else {
+        const step = 360 / count;
+        hues = Array.from({ length: count }, (_, i) => wrapHue(baseHue + i * step));
+    }
+
+    const hsluvInstance = new Hsluv();
+    const colors = [];
+
+    for (let i = 0; i < count; i++) {
+        const hue = hues[i % hues.length];
+        // Alternate lightness to boost neighbor contrast if caller didn't force a specific lightness
+        const l = (typeof lightness === 'number')
+            ? lightness
+            : Math.max(0, Math.min(100, baseLightness + (i % 2 === 0 ? lightnessDelta : -lightnessDelta)));
+        hsluvInstance.hsluv_h = hue;
+        hsluvInstance.hsluv_s = baseSaturation;
+        hsluvInstance.hsluv_l = l;
+        hsluvInstance.hsluvToRgb();
+
+        const r = Math.round(hsluvInstance.rgb_r * 255);
+        const g = Math.round(hsluvInstance.rgb_g * 255);
+        const b = Math.round(hsluvInstance.rgb_b * 255);
+        const rgbaColor = `rgb(${r},${g},${b})`;
+        const hexColor = rgbToHex([r / 255, g / 255, b / 255]);
+
+        colors.push({
+            step: i + 1,
+            hex: hexColor,
+            rgba: rgbaColor,
+            hsl: `hsl(${Math.round(hue)},${baseSaturation},${(typeof lightness === 'number') ? lightness : l})`
+        });
+    }
+
+    return colors;
+};
 
 // Context for toggling dark mode
 const ThemeContext = createContext();
@@ -250,7 +319,7 @@ const ColorPaletteGenerator = () => {
                         </TableHead>
                         <TableBody>
                             {colorRamps.map(({ name, colorRamp }) => (
-                                <TableRow key={name}>
+                                <TableRow key={name} >
                                     <TableCell>
                                         <small>{name}</small>
                                     </TableCell>
@@ -260,17 +329,18 @@ const ColorPaletteGenerator = () => {
                                             align="center"
                                             style={{
                                                 backgroundColor: hex,
+                                                borderColor: "#222",
                                                 color: (parseInt(hsl.match(/\d+/g)[2]) >= 50 ? "black" : "white"),
-                                                padding: "10px",
+                                                padding: "6px",
                                             }}
                                             title={hsl} // Show HSLuv value on hover
                                         >
                                             <p><pre>{hex}</pre></p>
                                             <div>
-                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{rgba}</code>
+                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '400' }}>{rgba}</code>
                                             </div>
                                              <div>
-                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{hsl}</code>
+                                                <code style={{ whiteSpace: 'nowrap', fontWeight: '400' }}>{hsl}</code>
                                             </div>
                                         </TableCell>
                                     ))}
@@ -402,7 +472,7 @@ const NeutralPaletteGenerator = () => {
                                     Color
                                 </TableCell>
                                 {Array.from({ length: NEUTRAL_STEP_NAMES.length }, (_, i) => (
-                                    <TableCell key={i} align="center">
+                                    <TableCell key={i} align="center" style={{ borderColor: "#222" }}>
                                         {" "}
                                         {NEUTRAL_STEP_NAMES[i]}
                                     </TableCell>
@@ -613,10 +683,160 @@ const exportAsDesignTokens = (colorRamps) => {
     downloadFile(JSON.stringify(designTokens, null, 2), "design_tokens.json", "application/json");
 };
 
+// CSV export tailored for charting/categorical palettes
+const exportAsChartingCSV = (colorRamps) => {
+    if (!colorRamps || colorRamps.length === 0) {
+        return;
+    }
+    const steps = colorRamps[0].colorRamp.map(({ step }) => step);
+    let csv = "Palette Name," + steps.join(",") + "\n";
+    colorRamps.forEach(({ name, colorRamp }) => {
+        csv += name + "," + colorRamp.map(({ hex }) => hex).join(",") + "\n";
+    });
+    downloadFile(csv, "charting_palette.csv", "text/csv");
+};
+
+// Generator for the charting (categorical) color palette
+const ChartingPaletteGenerator = () => {
+    const { darkMode, toggleTheme } = useContext(ThemeContext);
+
+    const [palettes, setPalettes] = useState([]);
+
+    useEffect(() => {
+        const mode = darkMode ? 'dark' : 'light';
+        const generated = CHARTING_PARAMS.map((params) => ({
+            name: params.name,
+            colorRamp: generateCategoricalPalette(params.count, { ...params, mode })
+        }));
+        setPalettes(generated);
+    }, [darkMode]);
+
+    return (
+        (<div style={{ padding: "15px", textAlign: "left" }}>
+            <Grid container spacing={2} style={{marginTop: '10px'}}>
+                <Grid size={6}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            justifyContent: "flex-start",
+                            alignItems: "flex-start",
+                            paddingBottom: "16px"
+                        }}
+                    >
+                        <Button
+                            onClick={toggleTheme}
+                            LightModeIcon
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            {darkMode ?<LightModeIcon /> :  <DarkModeIcon/> } &nbsp; Go {darkMode ? 'Light'  : "Dark"}
+                        </Button>
+                    </Stack>
+                </Grid>
+                <Grid size={6}>
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{
+                            justifyContent: "flex-end",
+                            alignItems: "flex-end",
+                            paddingBottom: "16px"
+                        }}
+                    >
+                        <Button
+                            onClick={() => exportAsJSON(palettes)}
+                            style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}
+                        >
+                            Export JSON
+                        </Button>
+                        <Button
+                            onClick={() => exportAsChartingCSV(palettes)}
+                            style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}
+                        >
+                            Export CSV
+                        </Button>
+                        <Button onClick={() => exportAsDesignTokens(palettes)} style={{
+                                    backgroundColor: darkMode ? "#444" : "#ddd",
+                                    color: darkMode ? "#fff" : "#000",
+                                }}>
+                            Export Design Tokens
+                        </Button>
+                        <Button
+                            onClick={() => exportToFigma(palettes)}
+                            style={{
+                                backgroundColor: darkMode ? "#444" : "#ddd",
+                                color: darkMode ? "#fff" : "#000",
+                            }}
+                        >
+                            Export to Figma
+                        </Button>
+                    </Stack>
+                </Grid>
+            </Grid>
+
+            <TableContainer component={Paper} sx={{ boxShadow: 0 }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>
+                                Charting Palette
+                            </TableCell>
+                            {palettes[0] && palettes[0].colorRamp.map(({ step }, i) => (
+                                <TableCell key={i} align="center">
+                                    {step}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {palettes.map(({ name, colorRamp }) => (
+                            <TableRow key={name}>
+                                <TableCell>
+                                    <small>{name}</small>
+                                </TableCell>
+                                {colorRamp.map(({ hex, rgba, hsl }, i) => (
+                                    <TableCell
+                                        key={i}
+                                        align="center"
+                                        style={{
+                                            backgroundColor: hex,
+                                            color: (parseInt(hsl.match(/\d+/g)[2]) >= 50 ? "black" : "white"),
+                                            padding: "10px",
+                                        }}
+                                        title={hsl}
+                                    >
+                                        <p><pre>{hex}</pre></p>
+                                        <div>
+                                            <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{rgba}</code>
+                                        </div>
+                                        <div>
+                                            <code style={{ whiteSpace: 'nowrap', fontWeight: '500' }}>{hsl}</code>
+                                        </div>
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </div>)
+    );
+};
+
 const App = () => {
     return (
         <ThemeProviderComponent>
             <ColorPaletteGenerator />
+            <ChartingPaletteGenerator />
             <NeutralPaletteGenerator />
         </ThemeProviderComponent>
     );

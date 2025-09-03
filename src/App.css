@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: "Roboto Flex", sans-serif !important;
+  font-family: "Roboto Mono",monospace, sans-serif !important;
   font-optical-sizing: auto;
   font-weight: 400;
   font-size: 14px;
